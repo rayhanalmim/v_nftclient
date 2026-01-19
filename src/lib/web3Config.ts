@@ -359,15 +359,3 @@ export async function switchNetwork(chainId: number) {
   }
 }
 
-// Declare window.ethereum type
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-      on: (event: string, callback: (...args: unknown[]) => void) => void;
-      removeListener: (event: string, callback: (...args: unknown[]) => void) => void;
-      selectedAddress: string | null;
-      chainId: string;
-    };
-  }
-}

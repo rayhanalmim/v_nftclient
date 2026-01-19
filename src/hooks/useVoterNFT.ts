@@ -42,15 +42,15 @@ export function useVoterNFT() {
       functionName: 'mintVoterNFT',
       args: [
         toAddress as `0x${string}`,
-        [
-          voterInfo.name,
-          voterInfo.fatherName,
-          voterInfo.motherName,
-          voterInfo.dateOfBirth,
-          voterInfo.nidNumber,
-          voterInfo.residentialArea,
-          voterInfo.ipfsMetadataHash,
-        ],
+        {
+          name: voterInfo.name,
+          fatherName: voterInfo.fatherName,
+          motherName: voterInfo.motherName,
+          dateOfBirth: voterInfo.dateOfBirth,
+          nidNumber: voterInfo.nidNumber,
+          residentialArea: voterInfo.residentialArea,
+          ipfsMetadataHash: voterInfo.ipfsMetadataHash,
+        },
       ],
     });
   };
