@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAccount } from 'wagmi';
 import { SUPPORTED_CHAINS, VOTING_AREAS } from '@/types';
 import CameraCapture from '@/components/CameraCapture';
 import { kycAPI } from '@/lib/api';
@@ -17,6 +18,7 @@ import { uploadToCloudinary } from '@/lib/cloudinaryService';
 
 export default function KYCPage() {
   const { user, refreshUser } = useAuth();
+  const { address: connectedWallet, isConnected } = useAccount();
   
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -28,6 +30,12 @@ export default function KYCPage() {
   const [idCardBack, setIdCardBack] = useState<File | null>(null);
   const [facePhoto, setFacePhoto] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState('');
+  
+  useEffect(() => {
+    if (connectedWallet && isConnected) {
+      setWalletAddress(connectedWallet);
+    }
+  }, [connectedWallet, isConnected]);
   const [selectedChain, setSelectedChain] = useState<'BNB' | 'ETH'>('BNB');
   const [residentialArea, setResidentialArea] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -185,12 +193,8 @@ export default function KYCPage() {
   };
 
   const validateStep4 = () => {
-    if (!walletAddress.trim()) {
-      alert('Please enter your wallet address');
-      return false;
-    }
-    if (!walletAddress.startsWith('0x') || walletAddress.length !== 42) {
-      alert('Please enter a valid wallet address (starting with 0x)');
+    if (!isConnected || !connectedWallet) {
+      alert('Please connect your wallet before submitting');
       return false;
     }
     if (!acceptTerms) {
@@ -816,7 +820,7 @@ export default function KYCPage() {
                           {faceVerification.skipped 
                             ? 'Verification Skipped' 
                             : faceVerification.isMatch 
-                              ? `Face Match Confirmed (${faceVerification.confidence}% confidence)` 
+                              ? 'Face Match Confirmed' 
                               : 'Face Mismatch Detected'}
                         </p>
                         <p className="text-gray-400 text-sm">{faceVerification.message}</p>
@@ -940,24 +944,37 @@ export default function KYCPage() {
               </div>
             </div>
 
-            {/* Wallet Address Input */}
+            {/* Wallet Connection Status */}
             <div>
               <label className="block text-gray-400 text-sm font-medium mb-2">
                 Wallet Address <span className="text-red-400">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={walletAddress}
-                  onChange={(e) => setWalletAddress(e.target.value)}
-                  placeholder="0x..."
-                  className="w-full bg-[#1E2329] border border-[#2B3139] rounded-xl px-4 py-3.5 text-white font-mono placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                />
-              </div>
-              <p className="text-gray-500 text-sm mt-2">
-                Make sure this is your correct wallet address on the {selectedChain === 'BNB' ? 'BSC Testnet' : 'Sepolia Testnet'}. 
-                Your NFT voter ID will be minted to this address.
-              </p>
+              {isConnected && connectedWallet ? (
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-green-400 font-medium">Wallet Connected</span>
+                  </div>
+                  <p className="text-white font-mono text-sm break-all">{connectedWallet}</p>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Your NFT voter ID will be minted to this address on {selectedChain === 'BNB' ? 'BSC Testnet' : 'Sepolia Testnet'}.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="text-yellow-400 font-medium">Wallet Not Connected</span>
+                  </div>
+                  <p className="text-gray-400 text-sm">
+                    Please connect your wallet using the button in the top navigation bar before submitting your KYC.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Terms and Conditions */}
