@@ -142,7 +142,7 @@ export default function KYCRequestDetailPage() {
         dateOfBirth: extractedData.dateOfBirth,
         nidNumber: extractedData.nidNumber,
         residentialArea: extractedData.residentialArea,
-        walletAddress: request.walletAddress,
+        walletAddress: address,
         chain: request.chainType,
         facePhotoIPFSHash: facePhotoResult.hash!,
       });
@@ -151,7 +151,7 @@ export default function KYCRequestDetailPage() {
       const metadataResult = await uploadMetadataToIPFS(metadata);
       if (!metadataResult.success) throw new Error('Failed to upload metadata');
 
-      // Step 3: Mint NFT directly from connected wallet
+      // Step 3: Mint NFT directly to connected wallet address
       setMintingStep('Please confirm the transaction in MetaMask...');
       
       const hash = await writeContractAsync({
@@ -159,7 +159,7 @@ export default function KYCRequestDetailPage() {
         abi: voterNFTAbi,
         functionName: 'mintVoterNFT',
         args: [
-          request.walletAddress as `0x${string}`,
+          address as `0x${string}`,
           {
             name: cleanName,
             fatherName: extractedData.fatherName,
@@ -305,11 +305,11 @@ export default function KYCRequestDetailPage() {
 
                 {/* Recipient Address */}
                 <div className="bg-white/5 rounded-xl p-4 mb-4">
-                  <label className="text-gray-500 text-xs uppercase tracking-wider mb-2 block">Recipient Wallet</label>
+                  <label className="text-gray-500 text-xs uppercase tracking-wider mb-2 block">NFT Recipient Wallet</label>
                   <div className="flex items-center gap-2">
-                    <code className="text-white font-mono text-sm flex-1 break-all">{request.walletAddress}</code>
+                    <code className="text-white font-mono text-sm flex-1 break-all">{address}</code>
                     <button
-                      onClick={() => copyToClipboard(request.walletAddress, 'Wallet address')}
+                      onClick={() => copyToClipboard(address!, 'Wallet address')}
                       className="p-2 hover:bg-white/10 rounded-lg transition-colors shrink-0"
                       title="Copy address"
                     >
@@ -318,7 +318,7 @@ export default function KYCRequestDetailPage() {
                       </svg>
                     </button>
                     <a
-                      href={getExplorerUrl(request.walletAddress, 'address')}
+                      href={getExplorerUrl(address!, 'address')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 hover:bg-white/10 rounded-lg transition-colors shrink-0"
@@ -773,9 +773,37 @@ export default function KYCRequestDetailPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#12161C] border border-white/10 rounded-2xl p-6 max-w-lg w-full animate-scale-in">
             <h3 className="text-xl font-bold text-white mb-4">Confirm NFT Minting</h3>
-            <p className="text-gray-400 mb-6">
-              You are about to mint a Voter NFT with the following information:
-            </p>
+            
+            {!isConnected ? (
+              <div className="space-y-4">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="text-yellow-400 font-medium mb-2">Wallet Connection Required</p>
+                      <p className="text-gray-400 text-sm">
+                        Please connect your wallet to mint the NFT. The NFT will be minted to your connected wallet address.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-center">
+                  <WalletConnectButton />
+                </div>
+                <button
+                  onClick={() => setShowMintModal(false)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-400 mb-6">
+                  You are about to mint a Voter NFT with the following information:
+                </p>
             
             <div className="bg-white/5 rounded-xl p-4 mb-6 space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -797,8 +825,9 @@ export default function KYCRequestDetailPage() {
                 </div>
               </div>
               <div>
-                <label className="text-gray-500 text-xs">Wallet Address</label>
-                <p className="text-white font-mono text-sm break-all">{request.walletAddress}</p>
+                <label className="text-gray-500 text-xs">NFT Recipient Wallet</label>
+                <p className="text-white font-mono text-sm break-all">{address}</p>
+                <p className="text-green-400 text-xs mt-1">✓ Using connected wallet</p>
               </div>
             </div>
 
@@ -817,29 +846,31 @@ export default function KYCRequestDetailPage() {
               </p>
             </div>
 
-            <div className="flex gap-4">
-              <button
-                onClick={() => setShowMintModal(false)}
-                disabled={loading}
-                className="flex-1 px-4 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleApprove}
-                disabled={loading}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-green-500/25 transition-all disabled:opacity-50"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Processing...
-                  </span>
-                ) : (
-                  'Confirm & Mint'
-                )}
-              </button>
-            </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setShowMintModal(false)}
+                    disabled={loading}
+                    className="flex-1 px-4 py-3 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleApprove}
+                    disabled={loading}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-green-500/25 transition-all disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Processing...
+                      </span>
+                    ) : (
+                      'Confirm & Mint'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
