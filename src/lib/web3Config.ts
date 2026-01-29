@@ -26,8 +26,8 @@ export const CHAIN_CONFIG = {
     rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
     blockExplorerUrls: ['https://testnet.bscscan.com'],
     contracts: {
-      voterNFT: '0x02e2cc3f51b2d8fa98fcea62bdbb126f3e29dd94',
-      votingSystem: '0xaa765eb225823131a8a9f608eed7d2bb0cbd7248',
+      voterNFT: '0x51f1182d716b119e05e07643843f874ad04874c0',
+      votingSystem: '0xd79a6599ab5fef53453744ebb2cc9d8e234f2b4f',
     },
   },
   [CHAIN_IDS.ETH_SEPOLIA]: {
