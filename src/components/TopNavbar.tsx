@@ -27,7 +27,7 @@ export function TopNavbar() {
               {/* Network Badge */}
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                <span className="text-yellow-400 text-sm font-medium">BNB Testnet</span>
+                <span className="text-yellow-400 text-sm font-medium">BNB Mainnet</span>
               </div>
               
               {/* Address Badge */}

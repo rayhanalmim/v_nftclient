@@ -294,7 +294,7 @@ export default function KYCPage() {
           </div>
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
             <p className="text-blue-400 text-sm">
-              <strong>Note:</strong> Once approved, your NFT voter ID will be minted on the {selectedChainInfo?.name} ({selectedChainInfo?.testnetName}). 
+              <strong>Note:</strong> Once approved, your NFT voter ID will be minted on the {selectedChainInfo?.name} ({selectedChainInfo?.networkName}). 
               You will be able to participate in all elections using this NFT.
             </p>
           </div>
@@ -933,7 +933,7 @@ export default function KYCPage() {
                       </div>
                     </div>
                     <p className="text-white font-semibold">{chain.name}</p>
-                    <p className="text-gray-500 text-sm">{chain.testnetName}</p>
+                    <p className="text-gray-500 text-sm">{chain.networkName}</p>
                   </button>
                 ))}
               </div>
@@ -959,7 +959,7 @@ export default function KYCPage() {
                   </div>
                   <p className="text-white font-mono text-sm break-all">{connectedWallet}</p>
                   <p className="text-gray-400 text-xs mt-2">
-                    Your NFT voter ID will be minted to this address on {selectedChain === 'BNB' ? 'BSC Testnet' : 'Sepolia Testnet'}.
+                    Your NFT voter ID will be minted to this address on {selectedChain === 'BNB' ? 'BSC Mainnet' : 'Sepolia Testnet'}.
                   </p>
                 </div>
               ) : (

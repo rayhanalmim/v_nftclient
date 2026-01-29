@@ -111,7 +111,7 @@ export interface ChainInfo {
   name: string;
   symbol: string;
   icon: string;
-  testnetName: string;
+  networkName: string;
   explorerUrl: string;
   rpcUrl: string;
   chainId: number;
@@ -123,17 +123,17 @@ export const SUPPORTED_CHAINS: ChainInfo[] = [
     name: 'BNB Smart Chain',
     symbol: 'BNB',
     icon: '🟡',
-    testnetName: 'BSC Testnet',
-    explorerUrl: 'https://testnet.bscscan.com',
-    rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
-    chainId: 97,
+    networkName: 'BSC Mainnet',
+    explorerUrl: 'https://bscscan.com',
+    rpcUrl: 'https://bsc-dataseed.binance.org',
+    chainId: 56,
   },
   {
     id: 'ETH',
     name: 'Ethereum',
     symbol: 'ETH',
     icon: '🔷',
-    testnetName: 'Sepolia Testnet',
+    networkName: 'Sepolia Testnet',
     explorerUrl: 'https://sepolia.etherscan.io',
     rpcUrl: 'https://rpc.sepolia.org',
     chainId: 11155111,

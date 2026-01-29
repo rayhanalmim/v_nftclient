@@ -248,7 +248,7 @@ export default function KYCRequestDetailPage() {
   // Get explorer URL based on chain
   const getExplorerUrl = (hash: string, type: 'tx' | 'address' = 'tx') => {
     const baseUrl = request.chainType === 'BNB' 
-      ? 'https://testnet.bscscan.com' 
+      ? 'https://bscscan.com' 
       : 'https://sepolia.etherscan.io';
     return `${baseUrl}/${type}/${hash}`;
   };
@@ -407,7 +407,7 @@ export default function KYCRequestDetailPage() {
                   <span className="text-2xl">{chain?.icon}</span>
                   <div>
                     <p className="text-white font-medium">{chain?.name}</p>
-                    <p className="text-gray-500 text-xs">{chain?.testnetName}</p>
+                    <p className="text-gray-500 text-xs">{chain?.networkName}</p>
                   </div>
                 </div>
               </div>
@@ -567,7 +567,7 @@ export default function KYCRequestDetailPage() {
               <span className="text-2xl">{chain?.icon}</span>
               <div>
                 <p className="text-white font-medium">{chain?.name}</p>
-                <span className="text-gray-500 text-sm">{chain?.testnetName}</span>
+                <span className="text-gray-500 text-sm">{chain?.networkName}</span>
               </div>
             </div>
           </div>

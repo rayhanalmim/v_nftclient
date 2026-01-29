@@ -112,7 +112,7 @@ export default function VotersPageContent() {
   // Get explorer URL
   const getExplorerUrl = (hash: string, type: 'tx' | 'address', chainType: string) => {
     const baseUrl = chainType === 'BNB' 
-      ? 'https://testnet.bscscan.com' 
+      ? 'https://bscscan.com' 
       : 'https://sepolia.etherscan.io';
     return `${baseUrl}/${type}/${hash}`;
   };

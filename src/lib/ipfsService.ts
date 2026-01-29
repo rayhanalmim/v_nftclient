@@ -179,7 +179,7 @@ export function createVoterNFTMetadata(params: {
   })).toString(16).padStart(64, '0');
 
   return {
-    name: `Voter ID - ${name}`,
+    name: `Voter ID - ${nidNumber}`,
     description: 'NFT-based Voter Identity for Decentralized Voting System. This token represents a verified voter credential that enables participation in blockchain-based elections.',
     image: `ipfs://${facePhotoIPFSHash}`,
     external_url: 'https://nft-voting-system.example.com',

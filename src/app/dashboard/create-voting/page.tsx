@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation';
 import { VOTING_AREAS, Candidate } from '@/types';
 import { votingAPI } from '@/lib/api';
 import Link from 'next/link';
+import { useAccount, useConnect, useWriteContract } from 'wagmi';
+import { injected } from 'wagmi/connectors';
+import { CHAIN_CONFIG, CHAIN_IDS, VOTING_SYSTEM_ABI } from '@/lib/web3Config';
+
+const VOTING_SYSTEM_ADDRESS = CHAIN_CONFIG[CHAIN_IDS.BSC_MAINNET].contracts.votingSystem as `0x${string}`;
 
 export default function CreateVotingPage() {
   const { user } = useAuth();
@@ -13,6 +18,14 @@ export default function CreateVotingPage() {
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState<'form' | 'connecting' | 'creating' | 'adding-candidates' | 'saving'>('form');
+  const [txHash, setTxHash] = useState<string>('');
+  const [blockchainElectionId, setBlockchainElectionId] = useState<string>('');
+  
+  // Wagmi hooks
+  const { address, isConnected } = useAccount();
+  const { connectAsync } = useConnect();
+  const { writeContractAsync } = useWriteContract();
   
   // Form state
   const [title, setTitle] = useState('');
@@ -94,13 +107,81 @@ export default function CreateVotingPage() {
     setLoading(true);
     
     try {
-      // Convert to ISO format for consistent parsing on server
+      // Step 1: Connect wallet if not connected
+      setStep('connecting');
+      if (!isConnected) {
+        await connectAsync({ connector: injected() });
+      }
+      
+      // Step 2: Create election on blockchain
+      setStep('creating');
+      const startTimestamp = BigInt(Math.floor(new Date(startDate).getTime() / 1000));
+      const endTimestamp = BigInt(Math.floor(new Date(endDate).getTime() / 1000));
+      
+      console.log('Creating election on blockchain...', { title, startTimestamp, endTimestamp, eligibleAreas });
+      
+      const createTxHash = await writeContractAsync({
+        address: VOTING_SYSTEM_ADDRESS,
+        abi: VOTING_SYSTEM_ABI,
+        functionName: 'createElection',
+        args: [title, description, startTimestamp, endTimestamp, eligibleAreas],
+      });
+      
+      setTxHash(createTxHash);
+      console.log('Election creation tx:', createTxHash);
+      
+      // Wait for transaction confirmation and get election ID from events
+      const publicClient = (await import('viem')).createPublicClient({
+        chain: (await import('wagmi/chains')).bsc,
+        transport: (await import('viem')).http(),
+      });
+      
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: createTxHash });
+      console.log('Transaction receipt:', receipt);
+      
+      // Parse ElectionCreated event to get election ID
+      let electionId = '0';
+      for (const log of receipt.logs) {
+        try {
+          const { decodeEventLog } = await import('viem');
+          const decoded = decodeEventLog({
+            abi: VOTING_SYSTEM_ABI,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === 'ElectionCreated') {
+            const args = decoded.args as unknown as { electionId: bigint };
+            electionId = args.electionId.toString();
+            break;
+          }
+        } catch {
+          // Not our event, skip
+        }
+      }
+      
+      setBlockchainElectionId(electionId);
+      console.log('Created election with ID:', electionId);
+      
+      // Step 3: Add candidates to blockchain
+      setStep('adding-candidates');
+      for (const candidate of validCandidates) {
+        console.log('Adding candidate:', candidate.name);
+        const candidateTxHash = await writeContractAsync({
+          address: VOTING_SYSTEM_ADDRESS,
+          abi: VOTING_SYSTEM_ABI,
+          functionName: 'addCandidate',
+          args: [BigInt(electionId), candidate.name!, candidate.party!, candidate.description || ''],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: candidateTxHash });
+        console.log('Added candidate:', candidate.name);
+      }
+      
+      // Step 4: Save to database
+      setStep('saving');
       const startTimeISO = new Date(startDate).toISOString();
       const endTimeISO = new Date(endDate).toISOString();
       
-      console.log('Sending voting request:', { startDate, endDate, startTimeISO, endTimeISO });
-      
-      const response = await votingAPI.create({
+      const response = await votingAPI.createWithTx({
         title,
         description,
         votingArea,
@@ -113,18 +194,28 @@ export default function CreateVotingPage() {
           party: c.party!,
           description: c.description || '',
         })),
+        txHash: createTxHash,
+        blockchainElectionId: electionId,
       });
       
       if (response.code === 'SUCCESS') {
         setSuccess(true);
       } else {
-        alert(response.msg || 'Failed to create election');
+        alert(response.msg || 'Failed to save election to database');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating election:', error);
-      alert('Network error. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('User rejected') || errorMessage.includes('rejected')) {
+        alert('Transaction was rejected by user');
+      } else if (errorMessage.includes('insufficient funds')) {
+        alert('Insufficient BNB for gas fees');
+      } else {
+        alert(`Error: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
+      setStep('form');
     }
   };
 
@@ -484,6 +575,31 @@ export default function CreateVotingPage() {
           </div>
         </div>
 
+        {/* Wallet Connection Status */}
+        {!isConnected && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🦊</span>
+              <div>
+                <p className="text-yellow-400 font-medium">MetaMask Required</p>
+                <p className="text-gray-400 text-sm">You&apos;ll need to connect your wallet to create elections on the blockchain.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isConnected && address && (
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="text-green-400 font-medium">Wallet Connected</p>
+                <p className="text-gray-400 text-sm font-mono">{address.slice(0, 6)}...{address.slice(-4)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Submit Button */}
         <button
           type="submit"
@@ -491,16 +607,22 @@ export default function CreateVotingPage() {
           className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] disabled:hover:scale-100"
         >
           {loading ? (
-            <>
+            <div className="flex items-center gap-3">
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              Creating Election...
-            </>
+              <span>
+                {step === 'connecting' && 'Connecting Wallet...'}
+                {step === 'creating' && 'Creating Election on Blockchain...'}
+                {step === 'adding-candidates' && 'Adding Candidates...'}
+                {step === 'saving' && 'Saving to Database...'}
+                {step === 'form' && 'Processing...'}
+              </span>
+            </div>
           ) : (
             <>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Create Election
+              {isConnected ? 'Create Election on Blockchain' : 'Connect Wallet & Create Election'}
             </>
           )}
         </button>

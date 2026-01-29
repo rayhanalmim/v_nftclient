@@ -15,6 +15,21 @@ export const CHAIN_IDS = {
 
 // Chain configurations
 export const CHAIN_CONFIG = {
+  [CHAIN_IDS.BSC_MAINNET]: {
+    name: 'BNB Smart Chain',
+    shortName: 'BSC',
+    nativeCurrency: {
+      name: 'BNB',
+      symbol: 'BNB',
+      decimals: 18,
+    },
+    rpcUrls: ['https://bsc-dataseed.binance.org/'],
+    blockExplorerUrls: ['https://bscscan.com'],
+    contracts: {
+      voterNFT: '0x46394c853351fc8c1a7b3824a8738cdf798f1ff6',
+      votingSystem: '0xe5cfdb39bc276d9d7995a8cf0b3989ec36f07140',
+    },
+  },
   [CHAIN_IDS.BSC_TESTNET]: {
     name: 'BNB Smart Chain Testnet',
     shortName: 'BSC Testnet',

@@ -9,8 +9,8 @@ import Link from 'next/link';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { VOTING_SYSTEM_ABI, VOTER_NFT_ABI, CHAIN_CONFIG, CHAIN_IDS } from '@/lib/web3Config';
 
-const VOTING_SYSTEM_ADDRESS = CHAIN_CONFIG[CHAIN_IDS.BSC_TESTNET].contracts.votingSystem as `0x${string}`;
-const VOTER_NFT_ADDRESS = CHAIN_CONFIG[CHAIN_IDS.BSC_TESTNET].contracts.voterNFT as `0x${string}`;
+const VOTING_SYSTEM_ADDRESS = CHAIN_CONFIG[CHAIN_IDS.BSC_MAINNET].contracts.votingSystem as `0x${string}`;
+const VOTER_NFT_ADDRESS = CHAIN_CONFIG[CHAIN_IDS.BSC_MAINNET].contracts.voterNFT as `0x${string}`;
 
 export default function VotingDetailPage() {
   const { user } = useAuth();
@@ -271,7 +271,7 @@ export default function VotingDetailPage() {
   if (voteSubmitted) {
     const votedCandidate = voting.candidates.find(c => c.id === selectedCandidate);
     const explorerUrl = user?.nftChain === 'BNB' 
-      ? `https://testnet.bscscan.com/tx/${txHash}`
+      ? `https://bscscan.com/tx/${txHash}`
       : `https://sepolia.etherscan.io/tx/${txHash}`;
     
     return (
@@ -551,7 +551,7 @@ export default function VotingDetailPage() {
                 <strong>Your Voting Chain:</strong> {userChain?.name}
               </p>
               <p className="text-gray-400 text-sm">
-                Your vote will be recorded on the {userChain?.testnetName} using your NFT: {user.nftTokenId}
+                Your vote will be recorded on the {userChain?.networkName} using your NFT: {user.nftTokenId}
               </p>
             </div>
           </div>

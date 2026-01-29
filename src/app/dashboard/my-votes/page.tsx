@@ -184,7 +184,7 @@ export default function MyVotesPage() {
                       </button>
                       <a
                         href={vote.chainType === 'BNB' 
-                          ? `https://testnet.bscscan.com/tx/${vote.transactionHash}`
+                          ? `https://bscscan.com/tx/${vote.transactionHash}`
                           : `https://sepolia.etherscan.io/tx/${vote.transactionHash}`
                         }
                         target="_blank"
