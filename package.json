@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node api.js && next dev -p 3070",
+    "dev": "next dev -p 3070",
     "build": "next build",
-    "start": "node api.js && next start -p 3070",
+    "start": "next start -p 3070",
     "lint": "eslint"
   },
   "dependencies": {
